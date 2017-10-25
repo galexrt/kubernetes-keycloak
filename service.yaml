@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-external
+  #namespace: zerbytes-live-infra
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+    - name: https
+      port: 8443
+      protocol: TCP
+      nodePort: 30443
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  #namespace: zerbytes-live-infra
+spec:
+  clusterIP: None
+  selector:
+    app: keycloak
+  ports:
+    - name: http
+      port: 8080
+    - name: https
+      port: 8443
+    - name: management
+      port: 9090
+    - name: jgroups-tcp
+      port: 7600
+    - name: jgroups-tcp-fd
+      port: 57600
+    - name: jgroups-udp
+      port: 55200
+      protocol: UDP
+    - name: jgroups-udp-mc
+      port: 45688
+      protocol: UDP
+    - name: jgroups-udp-fd
+      port: 54200
+      protocol: UDP
+    - name: modcluster
+      port: 23364
+    - name: modcluster-udp
+      port: 23364
+      protocol: UDP
+    - name: txn-recovery-ev
+      port: 4712
+    - name: txn-status-mgr
+      port: 4713
+  type: ClusterIP

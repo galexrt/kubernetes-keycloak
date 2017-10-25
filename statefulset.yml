@@ -1,0 +1,101 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+  #namespace: zerbytes-live-infra
+spec:
+  serviceName: keycloak
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      volumes:
+      - name: keycloak-scripts
+        projected:
+          sources:
+          - configMap:
+              name: keycloak-scripts-cm
+              items:
+              - key: REPLICAS
+                path: REPLICAS
+                mode: 0444
+              - key: run.sh
+                path: run.sh
+                mode: 0755
+              - key: standalone-ha.xml
+                path: standalone-ha.xml
+                mode: 0644
+      containers:
+        - name: keycloak
+          image: jboss/keycloak:latest
+          ports:
+            - name: https
+              containerPort: 8443
+            - name: management
+              containerPort: 9090
+            - name: jgroups-tcp
+              containerPort: 7600
+            - name: jgroups-tcp-fd
+              containerPort: 57600
+            - name: jgroups-udp
+              containerPort: 55200
+              protocol: UDP
+            - name: jgroups-udp-mc
+              containerPort: 45688
+              protocol: UDP
+            - name: jgroups-udp-fd
+              containerPort: 54200
+              protocol: UDP
+            - name: modcluster
+              containerPort: 23364
+            - name: modcluster-udp
+              containerPort: 23364
+              protocol: UDP
+            - name: txn-recovery-ev
+              containerPort: 4712
+            - name: txn-status-mgr
+              containerPort: 4713
+          env:
+            - name: POSTGRES_DATABASE
+              value: keycloak
+            - name: POSTGRES_USER
+              value: keycloak
+            - name: POSTGRES_PASSWORD
+              value: keycloak
+            - name: POSTGRES_ROOT_PASSWORD
+              value: password
+            - name: PROXY_ADDRESS_FORWARDING
+              value: "true"
+            - name: KEYCLOAK_USER
+              value: admin
+            - name: KEYCLOAK_PASSWORD
+              value: example123
+            - name: KEYCLOAK_MGMT_USER
+              value: admin
+            - name: KEYCLOAK_MGMT_PASSWORD
+              value: example123
+            # enable when you want to update/inject the new hosts on replicas change
+            #- name: AUTO_INJECT_HOSTS
+            #  value: "true"
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          command:
+            - /scripts/run.sh
+          args: []
+          volumeMounts:
+          - name: keycloak-scripts
+            mountPath: "/scripts"
+            readOnly: true
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: "750m"
+              memory: "1Gi"
