@@ -4,7 +4,6 @@ metadata:
   name: keycloak
   labels:
     app: keycloak
-  #namespace: zerbytes-live-infra
 spec:
   serviceName: keycloak
   replicas: 2
@@ -60,6 +59,10 @@ spec:
             - name: txn-status-mgr
               containerPort: 4713
           env:
+            - name: POSTGRES_HOST
+              value: postgres
+            - name: POSTGRES_PORT
+              value: "5432"
             - name: POSTGRES_DATABASE
               value: keycloak
             - name: POSTGRES_USER
@@ -78,6 +81,11 @@ spec:
               value: admin
             - name: KEYCLOAK_MGMT_PASSWORD
               value: example123
+            - name: BASE_SCRIPT_DIR
+              value: "/scripts"
+            # set this to replicas count for replication of sessions and stuff
+            - name: KEYCLOAK_OWNERS_COUNT
+              value: "2"
             # enable when you want to update/inject the new hosts on replicas change
             #- name: AUTO_INJECT_HOSTS
             #  value: "true"

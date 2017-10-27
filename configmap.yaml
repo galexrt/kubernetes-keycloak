@@ -4,8 +4,13 @@ data:
   run.sh: |
     #!/bin/bash
 
+    KEYCLOAK_STANDALONE_HA_CONF="/opt/jboss/keycloak/standalone/configuration/standalone-ha.xml"
+
+    BASE_SCRIPT_DIR="${BASE_SCRIPT_DIR:-/scripts}"
+    KEYCLOAK_OWNERS_COUNT="${KEYCLOAK_OWNERS_COUNT:-2}"
+
     function setReplicas {
-        REPLICAS="$(cat /scripts/REPLICAS)"
+        REPLICAS="$(cat "$BASE_SCRIPT_DIR/REPLICAS")"
         echo "==> Given replicas count is: $REPLICAS"
         local repl=$(( REPLICAS-1 ))
         HOSTS=()
@@ -34,13 +39,17 @@ data:
     }
 
     echo "Starting with args: $*"
-    cp /scripts/standalone-ha.xml /opt/jboss/keycloak/standalone/configuration/standalone-ha.xml
+    cp "$BASE_SCRIPT_DIR/standalone-ha.xml" "$KEYCLOAK_STANDALONE_HA_CONF"
     setReplicas
-    sed -i 's#__KEYCLOAK_HOSTS__#'"$KEYCLOAK_HOSTS"'#g' /opt/jboss/keycloak/standalone/configuration/standalone-ha.xml || { echo "Couldn't sed edit the template standalone-ha.xml. Exiting ..."; exit 1; }
+    sed -i 's#__KEYCLOAK_HOSTS__#'"$KEYCLOAK_HOSTS"'#g' "$KEYCLOAK_STANDALONE_HA_CONF" || \
+        { echo "Couldn't sed edit (KEYCLOAK_HOSTS) standalone-ha.xml. Exiting ..."; exit 1; }
+    sed -i 's#__KEYCLOAK_OWNERS_COUNT__#'$KEYCLOAK_OWNERS_COUNT'#g' "$KEYCLOAK_STANDALONE_HA_CONF" || \
+        { echo "Couldn't sed edit (KEYCLOAK_OWNERS_COUNT) the standalone-ha.xml. Exiting ..."; exit 1; }
 
     if [ $KEYCLOAK_MGMT_USER ] && [ $KEYCLOAK_MGMT_PASSWORD ]; then
         /opt/jboss/keycloak/bin/add-user.sh --user $KEYCLOAK_MGMT_USER --password $KEYCLOAK_MGMT_PASSWORD --enable --realm ManagementRealm -cw
         if [ $AUTO_INJECT_HOSTS ]; then
+            echo "==> AUTO_INJECT_HOSTS is enabled! <=="
             (
                 sleep 30
                 while true; do
@@ -197,7 +206,7 @@ data:
                         </security>
                     </datasource>
                     <ds:datasource xmlns:ds="urn:jboss:domain:datasources:4.0" xmlns="" jndi-name="java:jboss/datasources/KeycloakDS" enabled="true" use-java-context="true" pool-name="KeycloakDS" use-ccm="true">
-                        <ds:connection-url>jdbc:postgresql://${env.POSTGRES_PORT_5432_TCP_ADDR}:${env.POSTGRES_PORT_5432_TCP_PORT:5432}/${env.POSTGRES_DATABASE:keycloak}</ds:connection-url>
+                        <ds:connection-url>jdbc:postgresql://${env.POSTGRES_HOST:postgres}:${env.POSTGRES_PORT:5432}/${env.POSTGRES_DATABASE:keycloak}</ds:connection-url>
                         <ds:driver>postgresql</ds:driver>
                         <ds:security>
                             <ds:user-name>${env.POSTGRES_USER:keycloak}</ds:user-name>
@@ -299,10 +308,10 @@ data:
                     <local-cache name="users">
                         <eviction max-entries="10000" strategy="LRU"/>
                     </local-cache>
-                    <distributed-cache name="sessions" mode="SYNC" owners="1"/>
-                    <distributed-cache name="authenticationSessions" mode="SYNC" owners="1"/>
-                    <distributed-cache name="offlineSessions" mode="SYNC" owners="1"/>
-                    <distributed-cache name="loginFailures" mode="SYNC" owners="1"/>
+                    <distributed-cache name="sessions" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
+                    <distributed-cache name="authenticationSessions" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
+                    <distributed-cache name="offlineSessions" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
+                    <distributed-cache name="loginFailures" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
                     <local-cache name="authorization">
                         <eviction max-entries="10000" strategy="LRU"/>
                     </local-cache>
@@ -311,7 +320,7 @@ data:
                         <eviction max-entries="1000" strategy="LRU"/>
                         <expiration max-idle="3600000"/>
                     </local-cache>
-                    <distributed-cache name="actionTokens" mode="SYNC" owners="2">
+                    <distributed-cache name="actionTokens" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__">
                         <eviction max-entries="-1" strategy="NONE"/>
                         <expiration max-idle="-1" interval="300000"/>
                     </distributed-cache>
@@ -722,4 +731,3 @@ metadata:
   labels:
     app: keycloak
   name: keycloak-scripts-cm
-  #namespace: zerbytes-live-infra
