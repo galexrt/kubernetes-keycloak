@@ -69,8 +69,6 @@ spec:
               value: keycloak
             - name: POSTGRES_PASSWORD
               value: keycloak
-            - name: POSTGRES_ROOT_PASSWORD
-              value: password
             - name: PROXY_ADDRESS_FORWARDING
               value: "true"
             - name: KEYCLOAK_USER
