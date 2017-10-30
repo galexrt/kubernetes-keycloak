@@ -19,6 +19,7 @@ If you need help, please let me know through an issue.
 ## Configuration
 ### Environment variables
 The environment variables can be set in the `statefulset.yaml`.
+
 | Name | Description | Default |
 | ------------- |-------------| -----|
 | `POSTGRES_HOST` | Postgres Database address | `postgres` |
@@ -39,6 +40,7 @@ The environment variables can be set in the `statefulset.yaml`.
 
 ### ConfigMap variables
 The `ConfigMap` variables can be set in the `configmap.yaml`.
+
 | Name | Description | Default |
 | ---- | ----------- | ------- |
 | `REPLICAS` | Set to `replicas` count of the `StatefulSet`. Has to be the same! | `2` |
