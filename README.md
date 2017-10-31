@@ -37,10 +37,3 @@ The environment variables can be set in the `statefulset.yaml`.
 | `BASE_SCRIPT_DIR` | DON'T change unless you know what you are doing | `/scripts` |
 | `AUTO_INJECT_HOSTS` | Not used right now! Set to anything but empty to enable injection of new hosts during runtime  | `` (empty) |
 | `MY_POD_IP` |  | Kubernetes Downward API `status.podIP` |
-
-### ConfigMap variables
-The `ConfigMap` variables can be set in the `configmap.yaml`.
-
-| Name | Description | Default |
-| ---- | ----------- | ------- |
-| `REPLICAS` | Set to `replicas` count of the `StatefulSet`. Has to be the same! | `2` |
