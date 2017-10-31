@@ -84,9 +84,6 @@ spec:
             # set this to replicas count for replication of sessions and stuff
             - name: KEYCLOAK_OWNERS_COUNT
               value: "2"
-            # enable when you want to update/inject the new hosts on replicas change
-            #- name: AUTO_INJECT_HOSTS
-            #  value: "true"
             - name: MY_POD_IP
               valueFrom:
                 fieldRef:

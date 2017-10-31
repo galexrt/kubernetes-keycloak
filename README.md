@@ -35,7 +35,7 @@ The environment variables can be set in the `statefulset.yaml`.
 | `KEYCLOAK_MGMT_PASSWORD` | Management user password | `` |
 | `KEYCLOAK_OWNERS_COUNT` | The cache/sessions infiniband owner/"replica" count (should be `replicas` count) | `2` |
 | `BASE_SCRIPT_DIR` | DON'T change unless you know what you are doing | `/scripts` |
-| `AUTO_INJECT_HOSTS` | Set to anything but empty to enable injection of new hosts during runtime  | `` (empty) |
+| `AUTO_INJECT_HOSTS` | Not used right now! Set to anything but empty to enable injection of new hosts during runtime  | `` (empty) |
 | `MY_POD_IP` |  | Kubernetes Downward API `status.podIP` |
 
 ### ConfigMap variables
