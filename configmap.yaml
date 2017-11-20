@@ -9,12 +9,18 @@ data:
     KEYCLOAK_OWNERS_COUNT="${KEYCLOAK_OWNERS_COUNT:-2}"
 
     function setReplicas {
-        local current_host_count=$(hostname | rev | cut -d'-' -f1 | rev)
-        echo "==> Current host number: $current_host_count"
+        local i_am_number=$(hostname | rev | cut -d'-' -f1 | rev)
+        echo "==> I am instance number: $i_am_number"
         HOSTS=()
-        for ((i=0; i<=current_host_count; i++)) {
-            echo "=> Checking for replica number: $i"
-            HOSTS+=("keycloak-$i.keycloak[7600]")
+        for ((i=0; i<=i_am_number; i++)) {
+            echo "===> Checking instance: keycloak-$i"
+            curl -sS --retry 2 -m 4 --fail "http://keycloak-$i.keycloak:8080" > /dev/null
+            if [ $? -eq 0 ]; then
+                echo "===> Success! Hostname keycloak-$i reachable."
+                HOSTS+=("keycloak-$i.keycloak[7600]")
+            else
+                echo "===> Failed! Hostname keycloak-$i unreachable."
+            fi
         }
         KEYCLOAK_HOSTS=$(printf ",%s" "${HOSTS[@]}")
         export KEYCLOAK_HOSTS="${KEYCLOAK_HOSTS:1}"
