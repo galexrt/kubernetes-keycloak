@@ -14,8 +14,7 @@ data:
         HOSTS=()
         for ((i=0; i<=i_am_number; i++)) {
             echo "===> Checking instance: keycloak-$i"
-            curl -sS --retry 2 -m 4 --fail "http://keycloak-$i.keycloak:8080" > /dev/null
-            if [ $? -eq 0 ]; then
+            if (curl -sS --retry 2 -m 4 --fail "http://keycloak-$i.keycloak:8080" > /dev/null; [ $? -eq 0 ]); then
                 echo "===> Success! Hostname keycloak-$i reachable."
                 HOSTS+=("keycloak-$i.keycloak[7600]")
             else
