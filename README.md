@@ -20,6 +20,7 @@ If you need help, please let me know through an issue.
 > **NOTE** To disable user creation, leave the specific `*_USER` and `*_PASSWORD` environment variables empty (only works for `KEYCLOAK_*` variables).
 
 To change the usernames, edit the `*_USER` variables in the `ConfigMap` `keycloak-env` which can be found in [`configmap.yaml`](configmap.yaml).
+
 To change the passwords, edit the `*_PASSWORD` variables in the `Secret` `keycloak-secret`, which can be found in [`secret.yaml`](secret.yaml). The passwords/secrets need to be `base64` encoded (example `echo -n YOUR_PASSWORD | base64 -w0`).
 
 ### Keycloak
