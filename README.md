@@ -23,12 +23,12 @@ To change the usernames, edit the `*_USER` variables in the `ConfigMap` `keycloa
 To change the passwords, edit the `*_PASSWORD` variables in the `Secret` `keycloak-secret`, which can be found in [`secret.yaml`](secret.yaml). The passwords/secrets need to be `base64` encoded (example `echo -n YOUR_PASSWORD | base64 -w0`).
 
 ### Keycloak
-Username (`KEYCLOAK_USER`): `keycloak`
-Password (`KEYCLOAK_PASSWORD`): `keycloak123`
+* Username (`KEYCLOAK_USER`): `keycloak`
+* Password (`KEYCLOAK_PASSWORD`): `keycloak123`
 
 ### Management
-Username (`KEYCLOAK_MGMT_USER`): `keycloak`
-Password (`KEYCLOAK_MGMT_PASSWORD`): `keycloak123`
+* Username (`KEYCLOAK_MGMT_USER`): `keycloak`
+* Password (`KEYCLOAK_MGMT_PASSWORD`): `keycloak123`
 
 ### Postgres (Example)
 See [`postgres.yaml`](postgres.yaml) `env` vars for username and password.
@@ -62,6 +62,7 @@ The service which exposes Keycloak HTTP port only is named `keycloak-external`.
 
 ## Upgrade procedure
 > **NOTE** This procedure has **not** been tested to work in "100%" cases!
+>
 > **NOTE** This procedure has been tested with a replicas of `2` deployment of Keycloak.
 
 ### Without migrations
@@ -70,6 +71,7 @@ That is it. The `Pod`s should one by one get recreated with the image.
 
 ### With migrations
 > **WARNING** This procedure only needs to be done only when new migrations are added to the `bin/migrate-standalone-ha.cli` file (which can be found in the release tarball of Keycloak)!
+>
 > **WARNING** **This only needs to be done in one `Pod`!**
 
 Update the image tag in the `StatefulSet`, replace (`kubectl replace`) the `StatefulSet`, wait for the highest count `Pod` to get terminated and started again, immediately run the following command in the highest count Keycloak `Pod`:
