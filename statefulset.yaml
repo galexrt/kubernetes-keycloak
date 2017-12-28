@@ -30,7 +30,7 @@ spec:
                 mode: 0644
       containers:
         - name: keycloak
-          image: jboss/keycloak:latest
+          image: jboss/keycloak:3.4.2.Final
           ports:
             - name: https
               containerPort: 8443
@@ -58,32 +58,12 @@ spec:
               containerPort: 4712
             - name: txn-status-mgr
               containerPort: 4713
+          envFrom:
+          - configMapRef:
+              name: keycloak-env
+          - secretRef:
+              name: keycloak-secret
           env:
-            - name: POSTGRES_HOST
-              value: postgres
-            - name: POSTGRES_PORT
-              value: "5432"
-            - name: POSTGRES_DATABASE
-              value: keycloak
-            - name: POSTGRES_USER
-              value: keycloak
-            - name: POSTGRES_PASSWORD
-              value: keycloak
-            - name: PROXY_ADDRESS_FORWARDING
-              value: "true"
-            - name: KEYCLOAK_USER
-              value: admin
-            - name: KEYCLOAK_PASSWORD
-              value: example123
-            - name: KEYCLOAK_MGMT_USER
-              value: admin
-            - name: KEYCLOAK_MGMT_PASSWORD
-              value: example123
-            - name: BASE_SCRIPT_DIR
-              value: "/scripts"
-            # set this to replicas count for replication of sessions and stuff
-            - name: KEYCLOAK_OWNERS_COUNT
-              value: "2"
             - name: MY_POD_IP
               valueFrom:
                 fieldRef:

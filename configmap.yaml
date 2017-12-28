@@ -54,9 +54,12 @@ data:
     fi
 
     exec /opt/jboss/docker-entrypoint.sh -b=$MY_POD_IP -bmanagement=127.0.0.1 --server-config=standalone-ha.xml -Dcluster.instance.service.address="${KEYCLOAK_SERVICE_HOST}" "$@"
+  # Special caching parts taken from:
   # https://gist.github.com/maximRNBack/b3dcbc8587f686d09b3c10084e5dfeb3
+  # Original file is from Keycloak project, path `standalone/configuration/standalone-ha.xml` in release
   standalone-ha.xml: |
     <?xml version='1.0' encoding='UTF-8'?>
+
     <server xmlns="urn:jboss:domain:5.0">
         <extensions>
             <extension module="org.jboss.as.clustering.infinispan"/>
@@ -66,10 +69,8 @@ data:
             <extension module="org.jboss.as.ee"/>
             <extension module="org.jboss.as.ejb3"/>
             <extension module="org.jboss.as.jaxrs"/>
-            <extension module="org.jboss.as.jdr"/>
             <extension module="org.jboss.as.jmx"/>
             <extension module="org.jboss.as.jpa"/>
-            <extension module="org.jboss.as.jsf"/>
             <extension module="org.jboss.as.logging"/>
             <extension module="org.jboss.as.mail"/>
             <extension module="org.jboss.as.modcluster"/>
@@ -299,6 +300,8 @@ data:
                     <distributed-cache name="sessions" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
                     <distributed-cache name="authenticationSessions" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
                     <distributed-cache name="offlineSessions" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
+                    <distributed-cache name="clientSessions" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
+                    <distributed-cache name="offlineClientSessions" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
                     <distributed-cache name="loginFailures" mode="SYNC" owners="__KEYCLOAK_OWNERS_COUNT__"/>
                     <local-cache name="authorization">
                         <eviction max-entries="10000" strategy="LRU"/>
@@ -369,29 +372,11 @@ data:
                 </default-workmanager>
                 <cached-connection-manager/>
             </subsystem>
-            <subsystem xmlns="urn:jboss:domain:jdr:1.0"/>
-            <subsystem xmlns="urn:jboss:domain:jgroups:5.0" default-stack="tcp">
+            <subsystem xmlns="urn:jboss:domain:jgroups:5.0">
                 <channels default="ee">
                     <channel name="ee" stack="tcp"/>
                 </channels>
                 <stacks>
-                    <!--
-                    <stack name="udp">
-                        <transport type="UDP" socket-binding="jgroups-udp"/>
-                        <protocol type="PING"/>
-                        <protocol type="MERGE3"/>
-                        <protocol type="FD_SOCK"/>
-                        <protocol type="FD_ALL"/>
-                        <protocol type="VERIFY_SUSPECT"/>
-                        <protocol type="pbcast.NAKACK2"/>
-                        <protocol type="UNICAST3"/>
-                        <protocol type="pbcast.STABLE"/>
-                        <protocol type="pbcast.GMS"/>
-                        <protocol type="UFC"/>
-                        <protocol type="MFC"/>
-                        <protocol type="FRAG2"/>
-                    </stack>
-                    -->
                     <stack name="tcp">
                         <transport type="TCP" socket-binding="jgroups-tcp">
                             <property name="external_addr">${jboss.bind.address:0.0.0.0}</property>
@@ -427,7 +412,6 @@ data:
             <subsystem xmlns="urn:jboss:domain:jpa:1.1">
                 <jpa default-datasource="" default-extended-persistence-inheritance="DEEP"/>
             </subsystem>
-            <subsystem xmlns="urn:jboss:domain:jsf:1.0"/>
             <subsystem xmlns="urn:jboss:domain:mail:3.0">
                 <mail-session name="default" jndi-name="java:jboss/mail/Default">
                     <smtp-server outbound-socket-binding-ref="mail-smtp"/>
@@ -455,7 +439,7 @@ data:
                     </maximum-set>
                 </deployment-permissions>
             </subsystem>
-            <subsystem xmlns="urn:wildfly:elytron:1.0" final-providers="combined-providers" disallowed-providers="OracleUcrypto">
+            <subsystem xmlns="urn:wildfly:elytron:1.2" final-providers="combined-providers" disallowed-providers="OracleUcrypto">
                 <providers>
                     <aggregate-providers name="combined-providers">
                         <providers name="elytron"/>
@@ -489,18 +473,20 @@ data:
                     </properties-realm>
                 </security-realms>
                 <mappers>
-                    <logical-permission-mapper name="default-permission-mapper" logical-operation="unless" left="constant-permission-mapper" right="anonymous-permission-mapper"/>
-                    <simple-permission-mapper name="anonymous-permission-mapper">
-                        <permission-mapping principals="anonymous">
+                    <simple-permission-mapper name="default-permission-mapper" mapping-mode="first">
+                        <permission-mapping>
+                            <principal name="anonymous"/>
+                            <permission class-name="org.wildfly.extension.batch.jberet.deployment.BatchPermission" module="org.wildfly.extension.batch.jberet" target-name="*"/>
+                            <permission class-name="org.wildfly.transaction.client.RemoteTransactionPermission" module="org.wildfly.transaction.client"/>
+                            <permission class-name="org.jboss.ejb.client.RemoteEJBPermission" module="org.jboss.ejb-client"/>
+                        </permission-mapping>
+                        <permission-mapping match-all="true">
                             <permission class-name="org.wildfly.security.auth.permission.LoginPermission"/>
+                            <permission class-name="org.wildfly.extension.batch.jberet.deployment.BatchPermission" module="org.wildfly.extension.batch.jberet" target-name="*"/>
+                            <permission class-name="org.wildfly.transaction.client.RemoteTransactionPermission" module="org.wildfly.transaction.client"/>
+                            <permission class-name="org.jboss.ejb.client.RemoteEJBPermission" module="org.jboss.ejb-client"/>
                         </permission-mapping>
                     </simple-permission-mapper>
-                    <constant-permission-mapper name="constant-permission-mapper">
-                        <permission class-name="org.wildfly.security.auth.permission.LoginPermission"/>
-                        <permission class-name="org.wildfly.extension.batch.jberet.deployment.BatchPermission" module="org.wildfly.extension.batch.jberet" target-name="*"/>
-                        <permission class-name="org.wildfly.transaction.client.RemoteTransactionPermission" module="org.wildfly.transaction.client"/>
-                        <permission class-name="org.jboss.ejb.client.RemoteEJBPermission" module="org.jboss.ejb-client"/>
-                    </constant-permission-mapper>
                     <constant-realm-mapper name="local" realm-name="local"/>
                     <simple-role-decoder name="groups-to-roles" attribute="groups"/>
                     <constant-role-mapper name="super-user-mapper">
@@ -685,6 +671,10 @@ data:
                         </properties>
                     </provider>
                 </spi>
+                <spi name="x509cert-lookup">
+                    <default-provider>${keycloak.x509cert.lookup.provider:default}</default-provider>
+                    <provider name="default" enabled="true"/>
+                </spi>
             </subsystem>
         </profile>
         <interfaces>
@@ -719,4 +709,20 @@ metadata:
   labels:
     app: keycloak
   name: keycloak-scripts-cm
-  namespace: zerbytes-live-services
+---
+apiVersion: v1
+data:
+  POSTGRES_HOST: sinfra-stolon-proxy.zerbytes-live-svc-db-postgres.svc
+  POSTGRES_PORT: "5432"
+  POSTGRES_DATABASE: "keycloak"
+  POSTGRES_USER: "keycloak"
+  PROXY_ADDRESS_FORWARDING: "true"
+  KEYCLOAK_USER: "keycloak"
+  KEYCLOAK_MGMT_USER: "keycloak"
+  BASE_SCRIPT_DIR: "/scripts"
+  KEYCLOAK_OWNERS_COUNT: "2"
+kind: ConfigMap
+metadata:
+  labels:
+    app: keycloak
+  name: keycloak-env
