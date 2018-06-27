@@ -1,4 +1,6 @@
-apiVersion: apps/v1beta1
+---
+apiVersion: apps/v1
+# Change to apps/v1beta2 for K8s < 1.9
 kind: StatefulSet
 metadata:
   name: keycloak
@@ -7,6 +9,9 @@ metadata:
 spec:
   serviceName: keycloak
   replicas: 2
+  selector:
+    matchLabels:
+      app: keycloak
   template:
     metadata:
       labels:
