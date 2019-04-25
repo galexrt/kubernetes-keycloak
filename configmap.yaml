@@ -1,5 +1,6 @@
 apiVersion: v1
 data:
+  REPLICAS: "2"
   run.sh: |
     #!/bin/bash
 
