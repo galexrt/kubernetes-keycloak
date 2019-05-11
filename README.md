@@ -38,23 +38,22 @@ See [`postgres.yaml`](postgres.yaml) `env` vars for username and password.
 ### Environment variables
 The environment variables can be set in the `statefulset.yaml`.
 
-| Name | Description | Default |
-| ------------- |-------------| -----|
-| `POSTGRES_HOST` | Postgres Database address | `postgres` |
-| `POSTGRES_PORT` | Postgres Database port | `5432` |
-| `POSTGRES_DATABASE` | Postgres Database name | `keycloak` |
-| `POSTGRES_USER` | Postgres Database user | `keycloak` |
-| `POSTGRES_PASSWORD` | Postgres Database password | `password` |
-| `PROXY_ADDRESS_FORWARDING` | Enable proxy in front of Keycloak JBoss | `false` |
-| `KEYCLOAK_LOGLEVEL` | Set Keycloak log level | `INFO` |
-| `KEYCLOAK_USER` | First Keycloak user username (no management access) | `` |
-| `KEYCLOAK_PASSWORD` | First Keycloak user password (no management access) | `` |
-| `KEYCLOAK_MGMT_USER` | Management user username | `` |
-| `KEYCLOAK_MGMT_PASSWORD` | Management user password | `` |
-| `KEYCLOAK_OWNERS_COUNT` | The cache/sessions infiniband owner/"replica" count (should be `replicas` count) | `2` |
-| `BASE_SCRIPT_DIR` | DON'T change unless you know what you are doing | `/scripts` |
-| `AUTO_INJECT_HOSTS` | Not used right now! Set to anything but empty to enable injection of new hosts during runtime  | `` (empty) |
-| `MY_POD_IP` | The Pod IP | Kubernetes Downward API `status.podIP` |
+| Name                       | Description                                                                      | Default                                |
+| -------------------------- | -------------------------------------------------------------------------------- | -------------------------------------- |
+| `POSTGRES_HOST`            | Postgres Database address                                                        | `postgres`                             |
+| `POSTGRES_PORT`            | Postgres Database port                                                           | `5432`                                 |
+| `POSTGRES_DATABASE`        | Postgres Database name                                                           | `keycloak`                             |
+| `POSTGRES_USER`            | Postgres Database user                                                           | `keycloak`                             |
+| `POSTGRES_PASSWORD`        | Postgres Database password                                                       | `password`                             |
+| `PROXY_ADDRESS_FORWARDING` | Enable proxy in front of Keycloak JBoss                                          | `false`                                |
+| `KEYCLOAK_LOGLEVEL`        | Set Keycloak log level                                                           | `INFO`                                 |
+| `KEYCLOAK_USER`            | First Keycloak user username (no management access)                              | ``                                     |
+| `KEYCLOAK_PASSWORD`        | First Keycloak user password (no management access)                              | ``                                     |
+| `KEYCLOAK_MGMT_USER`       | Management user username                                                         | ``                                     |
+| `KEYCLOAK_MGMT_PASSWORD`   | Management user password                                                         | ``                                     |
+| `KEYCLOAK_OWNERS_COUNT`    | The cache/sessions infiniband owner/"replica" count (should be `replicas` count) | `2`                                    |
+| `BASE_SCRIPT_DIR`          | DON'T change unless you know what you are doing                                  | `/scripts`                             |
+| `MY_POD_IP`                | The Pod IP                                                                       | Kubernetes Downward API `status.podIP` |
 
 ## Exposing to the outside
 An appropiate `Ingress` can be found here: [`ingress.yaml`](ingress.yaml).
@@ -76,9 +75,11 @@ That is it. The `Pod`s should one by one get recreated with the image.
 > **WARNING** **This only needs to be done in one `Pod`!**
 
 Update the image tag in the `StatefulSet`, replace (`kubectl replace`) the `StatefulSet`, wait for the highest count `Pod` to get terminated and started again, immediately run the following command in the highest count Keycloak `Pod`:
+
 ```
 kubectl exec --namespace default -it keycloak-1 -- bash -c 'cd /opt/jboss && bin/jboss-cli.sh --file=bin/migrate-standalone-ha.cli'
 ```
+
 (Where `keycloak-1` would be the highest count `Pod`, for example for `replicas: 10`, it is `keycloak-9`)
 
 After the successfull run of the exec, you need to delete the `Pod` you execed into.
